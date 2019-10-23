@@ -5,10 +5,19 @@
  */
 package server.logic;
 
+import java.util.logging.Logger;
+
 /**
- *
- * @author adria
+ * This class will create 
+ * @author aimar
  */
-public class ServerWorkerThread {
+public class ServerWorkerThread extends Thread {
+    
+    private static final Logger LOGGER=Logger.getLogger("server.logic.ServerWorkerThread");
+    
+    
+    
+    
+    
     
 }
