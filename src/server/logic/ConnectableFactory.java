@@ -5,10 +5,17 @@
  */
 package server.logic;
 
+import server.model.DAO;
+import utilities.interfaces.Connectable;
+
+
 /**
  *
  * @author adria
  */
 public class ConnectableFactory {
-    
+
+    public static synchronized Connectable getDAO() {
+        return new DAO();
+    }
 }
