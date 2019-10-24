@@ -68,7 +68,7 @@ public class DAO {
         int result = 0;
         this.connect();
         
-        
+        String exist=null;
         
         
         
