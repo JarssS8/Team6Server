@@ -34,7 +34,7 @@ public class ApplicationServer {
      * Count of the threads that I'm using and is static because it could be
      * modify by the ServerWorkerThreadClass
      */
-    public static int currentThreadCount = 0;
+    private static int currentThreadCount = 0;
     
     /**
      * @param args the command line arguments
@@ -58,12 +58,12 @@ public class ApplicationServer {
             ServerSocket serverSocket = new ServerSocket(PORT);
             LOGGER.info("Waiting users that conects to the server");
             while (true) {
-                if (currentThreadCount < maxThreads) {
+                if (getCurrentThreadCount() < maxThreads) {
                     //This maybe could go in the bottom of the if
-                    currentThreadCount++;
-                    LOGGER.info("New Thread added. Number: "+currentThreadCount);
-                    ServerWorkerThread thread = new ServerWorkerThread();
-                    thread.reader(serverSocket.accept());
+                    setCurrentThreadCount(getCurrentThreadCount() + 1);
+                    LOGGER.info("New Thread added. Number: "+getCurrentThreadCount());
+                    ServerWorkerThread thread = new ServerWorkerThread(serverSocket.accept());
+                    thread.start();
                 }
                 LOGGER.info("Exceded max number of threads");
             }
@@ -72,6 +72,20 @@ public class ApplicationServer {
             throw new ConnectionException("Connection error in server socket\n" + ex.getMessage());
 
         }
+    }
+
+    /**
+     * @return the currentThreadCount
+     */
+    public static synchronized int getCurrentThreadCount() {
+        return currentThreadCount;
+    }
+
+    /**
+     * @param aCurrentThreadCount the currentThreadCount to set
+     */
+    public static synchronized void setCurrentThreadCount(int aCurrentThreadCount) {
+        currentThreadCount = aCurrentThreadCount;
     }
 
 }
