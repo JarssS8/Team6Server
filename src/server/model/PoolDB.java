@@ -11,7 +11,7 @@ import java.util.ResourceBundle;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
 import org.apache.commons.dbcp2.BasicDataSource;
-import server.exception.DataBaseConnectionException;
+import utilities.exception.DBException;
 
 /**
  *
@@ -101,7 +101,7 @@ public class PoolDB {
      * @throws server.exception.DataBaseConnectionException Because can't
      * connect correctly with the DataBase
      */
-    public synchronized static Connection getConnection() throws DataBaseConnectionException {
+    public synchronized static Connection getConnection() throws DBException {
 
         LOGGER.info("Entre in getConnection method");
         Connection con = null;
@@ -109,7 +109,7 @@ public class PoolDB {
            con = getDataSource().getConnection();
            LOGGER.info("Assign a new connection");
         } catch (SQLException e) {
-            throw new DataBaseConnectionException("Can't get the connection with the DataBase " + e.getMessage());
+            throw new DBException("Can't get the connection with the DataBase " + e.getMessage());
         }
         LOGGER.info("Return");
          return con;
@@ -120,14 +120,14 @@ public class PoolDB {
      * @throws DataBaseConnectionException Because can't
      * connect correctly with the DataBase
      */
-    public synchronized static void returnConnection(Connection onUseCon) throws DataBaseConnectionException {
+    public synchronized static void returnConnection(Connection onUseCon) throws DBException {
         if (onUseCon != null) {//If connection is done
             try {
                 onUseCon.close();
                 onUseCon = null;
 
             } catch (SQLException e) {
-                throw new DataBaseConnectionException("Can't get the connection with the DataBase " + e.getMessage());
+                throw new DBException("Can't get the connection with the DataBase " + e.getMessage());
             }
         }
     }

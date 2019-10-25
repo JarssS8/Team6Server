@@ -9,9 +9,11 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import utilities.beans.Message;
 import utilities.beans.User;
+import utilities.exception.DBException;
 import utilities.exception.LogicException;
 import utilities.exception.LoginAlreadyTakenException;
 import utilities.exception.LoginNotFoundException;
@@ -96,6 +98,8 @@ public class ServerWorkerThread extends Thread {
         } catch (LogicException ex) {
             LOGGER.severe(type);
         } catch (LoginAlreadyTakenException ex) {
+            LOGGER.severe(type);
+        } catch (DBException ex) {
             LOGGER.severe(type);
         } finally {
             try {

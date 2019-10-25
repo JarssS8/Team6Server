@@ -14,10 +14,10 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import utilities.beans.User;
 import utilities.exception.*;
+import utilities.interfaces.Connectable;
 
 
 
@@ -26,25 +26,20 @@ import utilities.exception.*;
  * @author Diego Urraca
  */
 
-public class DAO {
+public class DAO implements Connectable {
     //Connect with the Database
-    private Connection con = PoolDB.getConnection();
+    private Connection con = null;
     private PreparedStatement stmt;
     private String message;
     private static final Logger LOGGER = Logger.getLogger("server.model.DAO");
     
-    
-    
-    /**
-     * Disconnect with the database
-     */
-    private void disconnect(){
-            PoolDB.returnConnection(con);
-    }
-    
-    
     //ClASS METHODS
     
+    /**
+     * This method returns a message String
+     * @return message A string that contains a message
+     */
+    @Override
     public String getMessage(){
         //Method that return the final result of the methods of DAO
         return this.message;
@@ -56,11 +51,17 @@ public class DAO {
      * Method for User/Password comprobation and log in the application
      * @param user
      * @return user with the result
+     * @throws utilities.exception.DBException
      */
-    public User logIn(User user){
+    
+    @Override
+    public User logIn(User user) throws DBException{
         User usr = null;
         try{
+            
             String sql="Select * from user where id=?";
+            
+            con = PoolDB.getConnection();
             stmt=con.prepareStatement(sql);
             stmt.setInt(1, user.getId());
             ResultSet rs = stmt.executeQuery(sql);
@@ -105,9 +106,9 @@ public class DAO {
         }catch(SQLException e){
             this.message = "dberror";
             LOGGER.severe("Error connecting with database");
-            throw new (DBConnectionException);
+            throw new DBException();
         }finally{
-            this.disconnect();
+            PoolDB.returnConnection(con);
             return user;
         }
     }
@@ -116,11 +117,17 @@ public class DAO {
      * Method to register a new user
      * @param user
      * @return user
+     * @throws utilities.exception.DBException
      */
-    public User signUp(User user){
+    
+    @Override
+    public User signUp(User user) throws DBException{
         String logaux=null;
         try{
+            
             String sqlExist = "Select login from user where login=?";
+            
+            con = PoolDB.getConnection();
             stmt=con.prepareStatement(sqlExist);
             stmt.setString(1, user.getLogin());
              ResultSet rs = stmt.executeQuery(sqlExist);
@@ -150,9 +157,9 @@ public class DAO {
         }catch(SQLException e){
             this.message = "dberror";
             LOGGER.severe("Error connecting with database");
-            throw new (DBConnectionException);
+            throw new DBException();
         }finally{
-            this.disconnect();
+            PoolDB.returnConnection(con);
             return user;
         }
     }
@@ -160,10 +167,16 @@ public class DAO {
     /**
      * Method to SignOut the application
      * @param user 
+     * @throws utilities.exception.DBException 
      */
-    public void signOut(User user){
+    
+    @Override
+    public void logOut(User user) throws DBException{
         try {
+            
             String sql="update user set lastAccess=? where login=?";
+            
+            con = PoolDB.getConnection();
             stmt=con.prepareStatement(sql);
             stmt.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
             stmt.setString(2, user.getLogin());
@@ -171,10 +184,10 @@ public class DAO {
             stmt.close();
         } catch (SQLException ex) {
             LOGGER.severe("Error connecting with database");
-            throw new (DBConnectionException);
+            throw new DBException();
         }
         finally{
-            this.disconnect();
+            PoolDB.returnConnection(con);
         }
 
     }

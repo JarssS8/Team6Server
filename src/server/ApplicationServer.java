@@ -7,12 +7,10 @@ package server;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.Locale;
 import java.util.ResourceBundle;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import server.exception.ConnectionException;
 import server.logic.ServerWorkerThread;
+import utilities.exception.ServerSocketConnectionException;
 
 /**
  *
@@ -40,7 +38,7 @@ public class ApplicationServer {
      * @param args the command line arguments
      */
  
-    public static void main(String[] args) throws ConnectionException {
+    public static void main(String[] args) throws ServerSocketConnectionException {
         threadsListener();
     }
     
@@ -49,7 +47,7 @@ public class ApplicationServer {
      * the server got and decide if it can create a new thread
      * @throws ConnectionException A specific exception class that control if there are some problem with the server socket communication
      */
-    public static void threadsListener() throws ConnectionException {
+    public static void threadsListener() throws ServerSocketConnectionException {
 
         LOGGER.info("Open the properties file the maximum number of threads");
         int maxThreads = Integer.parseInt(ResourceBundle.getBundle("server.PropertiesServer").getString("maxThreads"));
@@ -70,7 +68,7 @@ public class ApplicationServer {
             }
 
         } catch (IOException ex) {
-            throw new ConnectionException("Connection error in server socket\n" + ex.getMessage());
+            throw new ServerSocketConnectionException("Connection error in server socket\n" + ex.getMessage());
 
         }
     }
