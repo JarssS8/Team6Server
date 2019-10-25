@@ -62,7 +62,8 @@ public class ApplicationServer {
                     //This maybe could go in the bottom of the if
                     setCurrentThreadCount(getCurrentThreadCount() + 1);
                     LOGGER.info("New Thread added. Number: "+getCurrentThreadCount());
-                    ServerWorkerThread thread = new ServerWorkerThread(serverSocket.accept());
+                    ServerWorkerThread thread = new ServerWorkerThread();
+                    thread.setSocket(serverSocket.accept());
                     thread.start();
                 }
                 LOGGER.info("Exceded max number of threads");
