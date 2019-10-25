@@ -11,7 +11,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import utilities.beans.User;
 
 
@@ -149,7 +152,17 @@ public class DAO {
      * @param user 
      */
     public void signOut(User user){
-        
+        try {
+            String sql="update user set lastAccess=? where login=?";
+            stmt=con.prepareStatement(sql);
+            stmt.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
+            stmt.setString(2, user.getLogin());
+            stmt.executeUpdate();
+            stmt.close();
+            PoolDB.returnConnection();
+        } catch (SQLException ex) {
+            Logger.getLogger(DAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     
 }
