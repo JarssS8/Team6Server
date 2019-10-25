@@ -16,6 +16,7 @@ import java.time.LocalTime;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import utilities.beans.User;
+import utilities.exception.*;
 
 
 
@@ -28,6 +29,7 @@ public class DAO {
     private Connection con = PoolDB.getConnection();
     private PreparedStatement stmt;
     private String message;
+    private static final Logger LOGGER = Logger.getLogger("server.model.DAO");
     
     
     
@@ -35,14 +37,7 @@ public class DAO {
      * Disconnect with the database
      */
     private void disconnect(){
-        try{
-            if(stmt != null)
-                stmt.close();
-        } catch(SQLException e){
-            this.message = "dberror";
-        } finally{
             PoolDB.returnConnection(con);
-        }
     }
     
     
@@ -80,10 +75,16 @@ public class DAO {
             }
             rs.close();
             //Result data comprobation to generate needed messages
-            if(usr == null)//Cannot found the user
+            if(usr == null){//Cannot found the user
                 this.message = "loginnotfound";
-            else if(user.getPassword()!=usr.getPassword())//Invalid password
+                LOGGER.severe("Login not found on database");
+                throw new LoginNotFoundException();
+            }
+            else if(user.getPassword()!=usr.getPassword()){//Invalid password
                 this.message = "loginbadpass";
+                LOGGER.severe("Wrong password to login");
+                throw new WrongPasswordException();
+            }
             else{//All OK
                 user=usr;
                 //We don't need the password in the client, so erase it before
@@ -96,10 +97,13 @@ public class DAO {
                 stmt=con.prepareStatement(sqlFecha);
                 stmt.setTimestamp(1, date);
                 stmt.executeUpdate(sqlFecha);
+                stmt.close();
                 this.message="loginok";
             }
         }catch(SQLException e){
             this.message = "dberror";
+            LOGGER.severe("Error connecting with database");
+            throw new (DBConnectionException);
         }finally{
             this.disconnect();
             return user;
@@ -136,11 +140,15 @@ public class DAO {
                 LocalDate ldate =LocalDate.now();
                 Timestamp date=Timestamp.valueOf(ldate.atTime(LocalTime.now()));
                 stmt.setTimestamp(7, date);
+                stmt.close();
+                this.message = "signupok";
             }
             else
                 this.message = "signupexist";
-        }catch(Exception e){
+        }catch(SQLException e){
             this.message = "dberror";
+            LOGGER.severe("Error connecting with database");
+            throw new (DBConnectionException);
         }finally{
             this.disconnect();
             return user;
@@ -159,9 +167,12 @@ public class DAO {
             stmt.setString(2, user.getLogin());
             stmt.executeUpdate();
             stmt.close();
-            PoolDB.returnConnection();
         } catch (SQLException ex) {
-            Logger.getLogger(DAO.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.severe("Error connecting with database");
+            throw new (DBConnectionException);
+        }
+        finally{
+            this.disconnect();
         }
     }
     
