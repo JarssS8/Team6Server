@@ -5,10 +5,20 @@
  */
 package server.logic;
 
+import java.net.Socket;
+
 /**
  *
- * @author adria
+ * @author Adrian
  */
-public class ServerWorkerThread {
+public class ServerWorkerThread extends Thread{
+    private static Socket sockett=null;
+    public ServerWorkerThread(Socket socket){
+        sockett=socket;
+    }
+    
+    public void reader(Socket socket) {
+       
+    }
     
 }
