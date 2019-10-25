@@ -61,6 +61,7 @@ public class ServerWorkerThread extends Thread {
             //Interpreting clients request
             switch(type) {
                 case Message.LOGIN_MESSAGE: {
+                    
                     this.user=dao.logIn(user);
                     LOGGER.info("Initiating login...");
                     break;
