@@ -21,21 +21,12 @@ import utilities.beans.User;
  * @author Diego Urraca
  */
 public class DAO {
-    private Connection con = null;
+    //Connect with the Database
+    private Connection con = PoolDB.getConnection();
     private PreparedStatement stmt;
     private String message;
     
-    /**
-     * Connect with the Database
-     */
-    private void connect(){
-        try {
-            con = PoolDB.getConnection();
-            stmt = con.createStatement();
-        } catch (SQLException ex) {
-            //TODO EXCEPTION
-        }
-    }
+    
     
     /**
      * Disconnect with the database
@@ -44,12 +35,10 @@ public class DAO {
         try{
             if(stmt != null)
                 stmt.close();
-            if(con != null)
-                con.close();
         } catch(SQLException e){
             //TODO EXCEPTION
         } finally{
-            PoolDB.liberarConexion();
+            PoolDB.returnConnection(con);
         }
     }
     
@@ -71,7 +60,6 @@ public class DAO {
     public User logIn(User user){
         User usr = null;
         try{
-            this.connect();
             String sql="Select * from user where id=?";
             stmt=con.prepareStatement(sql);
             stmt.setInt(1, user.getId());
@@ -122,7 +110,6 @@ public class DAO {
      */
     public User signUp(User user){
         try{
-            this.connect();
             String sql = "insert into user(login,email,fullName,status,"
                     + "privilege,password,lastPasswordChange) "
                     + "values(?,?,?,?,?,?,?,?,?)";
