@@ -6,11 +6,8 @@
 package server.model;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.ResourceBundle;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
 import org.apache.commons.dbcp2.BasicDataSource;
@@ -25,11 +22,7 @@ public class PoolDB {
      * Declaration of logger for use it on different methods of the class
      */
     private static final Logger LOGGER = Logger.getLogger("server.ApplicationServer");
-    
-    /**
-     * Declaration of the connection that we go to use 
-     */
-    private static Connection con = null;
+   
 
     /**
      * Declaration of BasicDataSource that is an implementation of javax.sql.DataSource
@@ -73,7 +66,10 @@ public class PoolDB {
     //Necesito dos arraylist y cuando le asigno una conexion a un cliente se me 
     //va del array de posibles conexiones a conexiones en uso
     public static DataSource getDataSource() {
+
+        LOGGER.info("Getting DataSource of the connection");
         if (basicDataSource == null) {
+            LOGGER.info("DataSource don't exist.\nCreating new DataSource");
             basicDataSource = new BasicDataSource();
             //Parameters of the connection
             basicDataSource.setDriverClassName(DRIVER);
@@ -81,13 +77,19 @@ public class PoolDB {
             basicDataSource.setPassword(PASSWORD);
             basicDataSource.setUrl(URL);
             //If i dont use the connection pool in 30 mins automatically removes
-            basicDataSource.setRemoveAbandonedTimeout(1800);
+            basicDataSource.setRemoveAbandonedTimeout(60);
+
             //Initial size of the pool is our max thread 
             basicDataSource.setInitialSize(MAX_THREADS);
             //The user got 8 seconds that he can be waiting for access
             basicDataSource.setMaxWaitMillis(8000);
+            //Abandoned pool connections can be remove
+            basicDataSource.setRemoveAbandonedOnBorrow(true);
+            //Set the min inactive connections that can be on my pool
+            basicDataSource.setMinIdle(MAX_THREADS);
 
         }
+        LOGGER.info("Return the DataBase");
         return basicDataSource;
     }
 
@@ -100,24 +102,30 @@ public class PoolDB {
      * connect correctly with the DataBase
      */
     public synchronized static Connection getConnection() throws DataBaseConnectionException {
+
+        LOGGER.info("Entre in getConnection method");
+        Connection con = null;
         try {
-            con = getDataSource().getConnection();
-            return con;
+           con = getDataSource().getConnection();
+           LOGGER.info("Assign a new connection");
         } catch (SQLException e) {
             throw new DataBaseConnectionException("Can't get the connection with the DataBase " + e.getMessage());
         }
+        LOGGER.info("Return");
+         return con;
     }
 
     /**
-     * This method if the connection is open, close it and set Connection con to null
+     * This method get the connection of one client and returns to the pool
      * @throws DataBaseConnectionException Because can't
      * connect correctly with the DataBase
      */
-    public synchronized static void liberarConexion() throws DataBaseConnectionException {
-        if (con != null) {//If connection is done
+    public synchronized static void returnConnection(Connection onUseCon) throws DataBaseConnectionException {
+        if (onUseCon != null) {//If connection is done
             try {
-                con.close();
-                con = null;
+                onUseCon.close();
+                onUseCon = null;
+
             } catch (SQLException e) {
                 throw new DataBaseConnectionException("Can't get the connection with the DataBase " + e.getMessage());
             }

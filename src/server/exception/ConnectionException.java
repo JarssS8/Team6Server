@@ -9,13 +9,13 @@ package server.exception;
  *
  * @author adria
  */
-public class ServerException extends Exception {
+public class ConnectionException extends Exception {
 
     /**
      * Creates a new instance of <code>ServerException</code> without detail
      * message.
      */
-    public ServerException() {
+    public ConnectionException() {
     }
 
     /**
@@ -24,7 +24,7 @@ public class ServerException extends Exception {
      *
      * @param msg the detail message.
      */
-    public ServerException(String msg) {
+    public ConnectionException(String msg) {
         super(msg);
     }
 }

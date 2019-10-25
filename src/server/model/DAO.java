@@ -5,6 +5,7 @@
  */
 package server.model;
 
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -24,6 +25,7 @@ import utilities.exception.*;
  *
  * @author Diego Urraca
  */
+
 public class DAO {
     //Connect with the Database
     private Connection con = PoolDB.getConnection();
@@ -174,6 +176,7 @@ public class DAO {
         finally{
             this.disconnect();
         }
+
     }
     
 }
