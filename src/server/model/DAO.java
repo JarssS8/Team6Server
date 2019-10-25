@@ -36,7 +36,7 @@ public class DAO {
             if(stmt != null)
                 stmt.close();
         } catch(SQLException e){
-            //TODO EXCEPTION
+            this.message = "dberror";
         } finally{
             PoolDB.returnConnection(con);
         }
@@ -109,18 +109,39 @@ public class DAO {
      * @return user
      */
     public User signUp(User user){
+        String logaux=null;
         try{
-            String sql = "insert into user(login,email,fullName,status,"
-                    + "privilege,password,lastPasswordChange) "
-                    + "values(?,?,?,?,?,?,?,?,?)";
-            stmt=con.prepareStatement(sql);
-            
+            String sqlExist = "Select login from user where login=?";
+            stmt=con.prepareStatement(sqlExist);
+            stmt.setString(1, user.getLogin());
+             ResultSet rs = stmt.executeQuery(sqlExist);
+            while(rs.next()){
+                logaux=rs.getString(1);
+            }
+            rs.close();
+            if(logaux==null){
+                String sql = "insert into user(login,email,fullName,status,"
+                        + "privilege,password,lastPasswordChange) "
+                        + "values(?,?,?,?,?,?,?)";
+                stmt=con.prepareStatement(sql);
+                stmt.setString(1, user.getLogin());
+                stmt.setString(2, user.getEmail());
+                stmt.setString(3, user.getFullName());
+                stmt.setInt(4, 1);
+                stmt.setInt(5, 1);
+                stmt.setString(6, user.getPassword());
+                LocalDate ldate =LocalDate.now();
+                Timestamp date=Timestamp.valueOf(ldate.atTime(LocalTime.now()));
+                stmt.setTimestamp(7, date);
+            }
+            else
+                this.message = "signupexist";
         }catch(Exception e){
-            //TODO exception
+            this.message = "dberror";
         }finally{
-            
+            this.disconnect();
+            return user;
         }
-        return user;
     }
     
     /**
