@@ -22,11 +22,7 @@ public class PoolDB {
      * Declaration of logger for use it on different methods of the class
      */
     private static final Logger LOGGER = Logger.getLogger("server.ApplicationServer");
-    
-    /**
-     * Declaration of the connection that we go to use 
-     */
-    //private static Connection con = null;
+   
 
     /**
      * Declaration of BasicDataSource that is an implementation of javax.sql.DataSource
@@ -70,6 +66,7 @@ public class PoolDB {
     //Necesito dos arraylist y cuando le asigno una conexion a un cliente se me 
     //va del array de posibles conexiones a conexiones en uso
     public static DataSource getDataSource() {
+
         LOGGER.info("Getting DataSource of the connection");
         if (basicDataSource == null) {
             LOGGER.info("DataSource don't exist.\nCreating new DataSource");
@@ -81,6 +78,7 @@ public class PoolDB {
             basicDataSource.setUrl(URL);
             //If i dont use the connection pool in 30 mins automatically removes
             basicDataSource.setRemoveAbandonedTimeout(60);
+
             //Initial size of the pool is our max thread 
             basicDataSource.setInitialSize(MAX_THREADS);
             //The user got 8 seconds that he can be waiting for access
@@ -104,6 +102,7 @@ public class PoolDB {
      * connect correctly with the DataBase
      */
     public synchronized static Connection getConnection() throws DataBaseConnectionException {
+
         LOGGER.info("Entre in getConnection method");
         Connection con = null;
         try {
@@ -126,6 +125,7 @@ public class PoolDB {
             try {
                 onUseCon.close();
                 onUseCon = null;
+
             } catch (SQLException e) {
                 throw new DataBaseConnectionException("Can't get the connection with the DataBase " + e.getMessage());
             }
