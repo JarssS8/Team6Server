@@ -26,7 +26,7 @@ import utilities.interfaces.Connectable;
  * @author Diego Urraca
  */
 
-public class DAO implements Connectable {
+public class DAO implements Connectable{
     //Connect with the Database
     private Connection con = null;
     private PreparedStatement stmt;
@@ -39,6 +39,7 @@ public class DAO implements Connectable {
      * This method returns a message String
      * @return message A string that contains a message
      */
+    
     @Override
     public String getMessage(){
         //Method that return the final result of the methods of DAO
@@ -54,58 +55,62 @@ public class DAO implements Connectable {
      * @throws utilities.exception.DBException
      */
     
+   
     @Override
     public User logIn(User user) throws DBException{
-        User usr = null;
+        User auxUser = new User();
+        LOGGER.info("Enter in login method");
         try{
             
-            String sql="Select * from user where id=?";
+            String sql="Select * from user where login=?";
             
             con = PoolDB.getConnection();
             stmt=con.prepareStatement(sql);
-            stmt.setInt(1, user.getId());
-            ResultSet rs = stmt.executeQuery(sql);
+            stmt.setString(1, user.getLogin());
+            LOGGER.info("Execute query");
+            ResultSet rs = stmt.executeQuery();
+            
             while(rs.next()){
-                usr.setId(rs.getInt(1));
-                usr.setLogin(rs.getString(2));
-                usr.setEmail(rs.getString(3));
-                usr.setFullName(rs.getString(4));
-                usr.setStatus(rs.getInt(5));
-                usr.setPrivilege(rs.getInt(6));
-                usr.setPassword(rs.getString(7));
-                usr.setLastAccess(rs.getTimestamp(8));
-                usr.setLastPasswordChange(rs.getTimestamp(9));
+                LOGGER.info("Assign variables to the user");
+                auxUser.setId(rs.getInt(1));
+                auxUser.setLogin(rs.getString(2));
+                auxUser.setEmail(rs.getString(3));
+                auxUser.setFullName(rs.getString(4));
+                auxUser.setStatus(rs.getInt(5));
+                auxUser.setPrivilege(rs.getInt(6));
+                auxUser.setPassword(rs.getString(7));
+                auxUser.setLastAccess(rs.getTimestamp(8));
+                auxUser.setLastPasswordChange(rs.getTimestamp(9));
             }
             rs.close();
             //Result data comprobation to generate needed messages
-            if(usr == null){//Cannot found the user
+            if(auxUser == null){//Cannot found the user
                 this.message = "loginnotfound";
                 LOGGER.severe("Login not found on database");
                 throw new LoginNotFoundException();
             }
-            else if(user.getPassword()!=usr.getPassword()){//Invalid password
+            else if(!user.getPassword().equals(auxUser.getPassword())){//Invalid password
                 this.message = "loginbadpass";
                 LOGGER.severe("Wrong password to login");
                 throw new WrongPasswordException();
             }
             else{//All OK
-                user=usr;
+                LOGGER.info("User and password match");
+                user=auxUser;
                 //We don't need the password in the client, so erase it before
                 //send the user data is more secure
                 user.setPassword(null);
                 //Update of the last log in
-                LocalDate ldate =LocalDate.now();
-                Timestamp date=Timestamp.valueOf(ldate.atTime(LocalTime.now()));
                 String sqlFecha="Update user set lastAccess=?";
                 stmt=con.prepareStatement(sqlFecha);
-                stmt.setTimestamp(1, date);
-                stmt.executeUpdate(sqlFecha);
+                stmt.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
+                stmt.executeUpdate();
                 stmt.close();
                 this.message="loginok";
             }
         }catch(SQLException e){
             this.message = "dberror";
-            LOGGER.severe("Error connecting with database");
+            LOGGER.severe("Error connecting with database"+e.getMessage());
             throw new DBException();
         }finally{
             PoolDB.returnConnection(con);
@@ -120,6 +125,7 @@ public class DAO implements Connectable {
      * @throws utilities.exception.DBException
      */
     
+    
     @Override
     public User signUp(User user) throws DBException{
         String logaux=null;
@@ -130,11 +136,12 @@ public class DAO implements Connectable {
             con = PoolDB.getConnection();
             stmt=con.prepareStatement(sqlExist);
             stmt.setString(1, user.getLogin());
-             ResultSet rs = stmt.executeQuery(sqlExist);
+             ResultSet rs = stmt.executeQuery();
             while(rs.next()){
                 logaux=rs.getString(1);
             }
             rs.close();
+            stmt.close();
             if(logaux==null){
                 String sql = "insert into user(login,email,fullName,status,"
                         + "privilege,password,lastPasswordChange) "
@@ -146,9 +153,8 @@ public class DAO implements Connectable {
                 stmt.setInt(4, 1);
                 stmt.setInt(5, 1);
                 stmt.setString(6, user.getPassword());
-                LocalDate ldate =LocalDate.now();
-                Timestamp date=Timestamp.valueOf(ldate.atTime(LocalTime.now()));
-                stmt.setTimestamp(7, date);
+                stmt.setTimestamp(7, Timestamp.valueOf(LocalDateTime.now()));
+                stmt.executeUpdate();
                 stmt.close();
                 this.message = "signupok";
             }
@@ -156,7 +162,7 @@ public class DAO implements Connectable {
                 this.message = "signupexist";
         }catch(SQLException e){
             this.message = "dberror";
-            LOGGER.severe("Error connecting with database");
+            LOGGER.severe("Error connecting with database"+e.getMessage());
             throw new DBException();
         }finally{
             PoolDB.returnConnection(con);
@@ -169,6 +175,7 @@ public class DAO implements Connectable {
      * @param user 
      * @throws utilities.exception.DBException 
      */
+    
     
     @Override
     public void logOut(User user) throws DBException{
