@@ -21,7 +21,7 @@ public class PoolDB {
     /**
      * Declaration of logger for use it on different methods of the class
      */
-    private static final Logger LOGGER = Logger.getLogger("server.testing.PoolDB");
+    private static final Logger LOGGER = Logger.getLogger("server.model.PoolDB");
    
 
     /**
@@ -32,31 +32,31 @@ public class PoolDB {
     /**
      * Assign to a final variable the url of or DataBase
      */
-    private static final String URL = ResourceBundle.getBundle("server.testing.PropertiesServer")
+    private static final String URL = ResourceBundle.getBundle("server.PropertiesServer")
             .getString("urlDataBase");
 
     /**
      * Assign to a final variable the driver of or DataBase
      */
-    private static final String DRIVER = ResourceBundle.getBundle("server.testing.PropertiesServer")
+    private static final String DRIVER = ResourceBundle.getBundle("server.PropertiesServer")
             .getString("driverClassName");
 
     /**
      * Assign to a final variable the user of or DataBase
      */
-    private static final String USER = ResourceBundle.getBundle("server.testing.PropertiesServer")
+    private static final String USER = ResourceBundle.getBundle("server.PropertiesServer")
             .getString("userDataBase");
 
     /**
      * Assign to a final variable the password of or DataBase 
      */
-    private static final String PASSWORD = ResourceBundle.getBundle("server.testing.PropertiesServer")
+    private static final String PASSWORD = ResourceBundle.getBundle("server.PropertiesServer")
             .getString("passwordDataBase");
 
     /**
      * Assign to a final variable the maximum threads  possible
      */
-    private static final int MAX_THREADS = Integer.parseInt(ResourceBundle.getBundle("server.testing.PropertiesServer")
+    private static final int MAX_THREADS = Integer.parseInt(ResourceBundle.getBundle("server.PropertiesServer")
             .getString("maxThreads"));
 
     /**
