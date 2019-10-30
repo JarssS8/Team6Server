@@ -21,7 +21,7 @@ public class PoolDB {
     /**
      * Declaration of logger for use it on different methods of the class
      */
-    private static final Logger LOGGER = Logger.getLogger("server.ApplicationServer");
+    private static final Logger LOGGER = Logger.getLogger("server.testing.PoolDB");
    
 
     /**
@@ -32,31 +32,31 @@ public class PoolDB {
     /**
      * Assign to a final variable the url of or DataBase
      */
-    private static final String URL = ResourceBundle.getBundle("server.PropertiesServer")
+    private static final String URL = ResourceBundle.getBundle("server.testing.PropertiesServer")
             .getString("urlDataBase");
 
     /**
      * Assign to a final variable the driver of or DataBase
      */
-    private static final String DRIVER = ResourceBundle.getBundle("server.PropertiesServer")
+    private static final String DRIVER = ResourceBundle.getBundle("server.testing.PropertiesServer")
             .getString("driverClassName");
 
     /**
      * Assign to a final variable the user of or DataBase
      */
-    private static final String USER = ResourceBundle.getBundle("server.PropertiesServer")
+    private static final String USER = ResourceBundle.getBundle("server.testing.PropertiesServer")
             .getString("userDataBase");
 
     /**
      * Assign to a final variable the password of or DataBase 
      */
-    private static final String PASSWORD = ResourceBundle.getBundle("server.PropertiesServer")
+    private static final String PASSWORD = ResourceBundle.getBundle("server.testing.PropertiesServer")
             .getString("passwordDataBase");
 
     /**
      * Assign to a final variable the maximum threads  possible
      */
-    private static final int MAX_THREADS = Integer.parseInt(ResourceBundle.getBundle("server.PropertiesServer")
+    private static final int MAX_THREADS = Integer.parseInt(ResourceBundle.getBundle("server.testing.PropertiesServer")
             .getString("maxThreads"));
 
     /**
@@ -69,6 +69,7 @@ public class PoolDB {
 
         LOGGER.info("Getting DataSource of the connection");
         if (basicDataSource == null) {
+            
             LOGGER.info("DataSource don't exist.\nCreating new DataSource");
             basicDataSource = new BasicDataSource();
             //Parameters of the connection
