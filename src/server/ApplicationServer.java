@@ -63,8 +63,10 @@ public class ApplicationServer {
                     ServerWorkerThread thread = new ServerWorkerThread();
                     thread.setSocket(serverSocket.accept());
                     thread.start();
+                } else {
+                    LOGGER.info("Exceded max number of threads");
                 }
-                LOGGER.info("Exceded max number of threads");
+                
             }
 
         } catch (IOException ex) {

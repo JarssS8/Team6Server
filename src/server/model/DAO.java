@@ -57,7 +57,7 @@ public class DAO implements Connectable{
     
    
     @Override
-    public User logIn(User user) throws DBException{
+    public User logIn(User user) throws DBException {
         User auxUser = new User();
         LOGGER.info("Enter in login method");
         try{
@@ -71,7 +71,7 @@ public class DAO implements Connectable{
             ResultSet rs = stmt.executeQuery();
             
             while(rs.next()){
-                LOGGER.info("Assign variables to the user");
+                LOGGER.info("Assign values to the user");
                 auxUser.setId(rs.getInt(1));
                 auxUser.setLogin(rs.getString(2));
                 auxUser.setEmail(rs.getString(3));
