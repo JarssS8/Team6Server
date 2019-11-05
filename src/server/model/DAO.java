@@ -97,7 +97,6 @@ public class DAO implements Connectable{
                 stmt.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
                 stmt.executeUpdate();
                 stmt.close();
-                this.message="OK";
             }
         }catch(SQLException e){
             this.message = "ServerError";

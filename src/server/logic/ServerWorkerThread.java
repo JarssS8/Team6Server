@@ -53,16 +53,20 @@ public class ServerWorkerThread extends Thread {
             user = messageIn.getUser();
             type = messageIn.getType();
             LOGGER.info("User wants to "+type);
-            LOGGER.info("Starting to decide...");
             
             //Interpreting clients request
+            LOGGER.info("Starting to decide...");
             messageOut=interpreteMessage(messageIn);
             //Sending answer to the client
             
-            messageOut.setUser(this.user);
+            if (messageOut.getUser() != null) {
+                messageOut.setType("OK");
+            }
+            
             LOGGER.info("Message loaded to return: ");
             objectOutputStream.writeObject(messageOut);
-            LOGGER.info("Message sent...");
+            LOGGER.info("Message sent...");      
+
             //Closing Streams and the socket
             if (objectOutputStream != null) {
                 objectOutputStream.close();
@@ -94,12 +98,12 @@ public class ServerWorkerThread extends Thread {
         try {
             switch(type) {
                 case Message.LOGIN_MESSAGE: {
-                    this.user=dao.logIn(user);
+                    retMessage.setUser(dao.logIn(user));
                     LOGGER.info("Initiating login...");
                     break;
                 }
                 case Message.SIGNUP_MESSAGE: {
-                    this.user=dao.signUp(user);
+                    retMessage.setUser(dao.signUp(user));
                     LOGGER.info("Initiating sign up...");
                     break;
                 }
