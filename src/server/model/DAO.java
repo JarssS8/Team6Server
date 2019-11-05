@@ -105,8 +105,8 @@ public class DAO implements Connectable{
             throw new ServerConnectionErrorException();
         }finally{
             PoolDB.returnConnection(con);
-            return user;
         }
+        return user;
     }
     
     /**
@@ -153,13 +153,13 @@ public class DAO implements Connectable{
             else
                 this.message = "signupexist";
         }catch(SQLException e){
-            this.message = "dberror";
+            this.message = "ServerError";
             LOGGER.severe("Error connecting with database"+e.getMessage());
-            
+            throw new ServerConnectionErrorException();
         }finally{
             PoolDB.returnConnection(con);
-            return user;
         }
+        return user;
     }
     
     /**
@@ -182,8 +182,7 @@ public class DAO implements Connectable{
             stmt.executeUpdate();
             stmt.close();
         } catch (SQLException ex) {
-            LOGGER.severe("Error connecting with database");
-            
+            LOGGER.severe("Error connecting with database"); 
         }
         finally{
             PoolDB.returnConnection(con);

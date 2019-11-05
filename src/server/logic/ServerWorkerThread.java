@@ -34,16 +34,11 @@ public class ServerWorkerThread extends Thread {
     private String type;
     private Connectable dao = ConnectableFactory.getDAO();
     private Socket socket;
-    
-    /**
-     * This method receives a socket from ApplicationServer and assigns it to
-     * a local socket object.
-     * @param socket A socket that contains the message from client side.
-     */
-    public void setSocket(Socket socket) {
+
+    public ServerWorkerThread(Socket socket) {
         this.socket=socket;
     }
- 
+    
     /**
      * This method executes the thread.
      */
@@ -114,7 +109,7 @@ public class ServerWorkerThread extends Thread {
                     break;
                 }
             }
-        } catch (LoginNotFoundException e3) {
+        } catch (LoginNotFoundException ex) {
             LOGGER.warning("Login not found");
             retMessage.setType("LoginError");
         } catch (WrongPasswordException ex) {
