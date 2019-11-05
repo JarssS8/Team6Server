@@ -11,9 +11,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.logging.Logger;
 import utilities.beans.User;
 import utilities.exception.*;
@@ -40,24 +38,20 @@ public class DAO implements Connectable{
      * @return message A string that contains a message
      */
     
-    @Override
-    public String getMessage(){
-        //Method that return the final result of the methods of DAO
-        return this.message;
-    }
-    
    //DB METHODS
     
     /**
      * Method for User/Password comprobation and log in the application
      * @param user
      * @return user with the result
-     * @throws utilities.exception.DBException
+     * @throws utilities.exception.LoginNotFoundException
+     * @throws utilities.exception.WrongPasswordException
+     * @throws utilities.exception.ServerConnectionErrorException
      */
     
    
     @Override
-    public User logIn(User user) throws DBException {
+    public User logIn(User user) throws LoginNotFoundException, WrongPasswordException, ServerConnectionErrorException {
         User auxUser = new User();
         LOGGER.info("Enter in login method");
         try{
@@ -85,33 +79,30 @@ public class DAO implements Connectable{
             rs.close();
             //Result data comprobation to generate needed messages
             if(auxUser == null){//Cannot found the user
-                this.message = "loginnotfound";
+                this.message = "LoginError";
                 LOGGER.severe("Login not found on database");
                 throw new LoginNotFoundException();
             }
             else if(!user.getPassword().equals(auxUser.getPassword())){//Invalid password
-                this.message = "loginbadpass";
+                this.message = "PasswordError";
                 LOGGER.severe("Wrong password to login");
                 throw new WrongPasswordException();
             }
             else{//All OK
                 LOGGER.info("User and password match");
                 user=auxUser;
-                //We don't need the password in the client, so erase it before
-                //send the user data is more secure
-                user.setPassword(null);
                 //Update of the last log in
                 String sqlFecha="Update user set lastAccess=?";
                 stmt=con.prepareStatement(sqlFecha);
                 stmt.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
                 stmt.executeUpdate();
                 stmt.close();
-                this.message="loginok";
+                this.message="OK";
             }
         }catch(SQLException e){
-            this.message = "dberror";
+            this.message = "ServerError";
             LOGGER.severe("Error connecting with database"+e.getMessage());
-            throw new DBException();
+            throw new ServerConnectionErrorException();
         }finally{
             PoolDB.returnConnection(con);
             return user;
@@ -122,12 +113,13 @@ public class DAO implements Connectable{
      * Method to register a new user
      * @param user
      * @return user
-     * @throws utilities.exception.DBException
+     * @throws utilities.exception.LoginAlreadyTakenException
+     * @throws utilities.exception.ServerConnectionErrorException
      */
     
     
     @Override
-    public User signUp(User user) throws DBException{
+    public User signUp(User user) throws LoginAlreadyTakenException, ServerConnectionErrorException{
         String logaux=null;
         try{
             
@@ -163,7 +155,7 @@ public class DAO implements Connectable{
         }catch(SQLException e){
             this.message = "dberror";
             LOGGER.severe("Error connecting with database"+e.getMessage());
-            throw new DBException();
+            
         }finally{
             PoolDB.returnConnection(con);
             return user;
@@ -173,12 +165,12 @@ public class DAO implements Connectable{
     /**
      * Method to SignOut the application
      * @param user 
-     * @throws utilities.exception.DBException 
+     *  
      */
     
     
     @Override
-    public void logOut(User user) throws DBException{
+    public void logOut(User user) throws ServerConnectionErrorException{
         try {
             
             String sql="update user set lastAccess=? where login=?";
@@ -191,7 +183,7 @@ public class DAO implements Connectable{
             stmt.close();
         } catch (SQLException ex) {
             LOGGER.severe("Error connecting with database");
-            throw new DBException();
+            
         }
         finally{
             PoolDB.returnConnection(con);

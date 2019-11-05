@@ -11,7 +11,7 @@ import java.util.ResourceBundle;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
 import org.apache.commons.dbcp2.BasicDataSource;
-import utilities.exception.DBException;
+import utilities.exception.*;
 
 /**
  *
@@ -102,7 +102,7 @@ public class PoolDB {
      * @throws server.exception.DataBaseConnectionException Because can't
      * connect correctly with the DataBase
      */
-    public synchronized static Connection getConnection() throws DBException {
+    public synchronized static Connection getConnection() throws ServerConnectionErrorException {
 
         LOGGER.info("Entre in getConnection method");
         Connection con = null;
@@ -110,7 +110,7 @@ public class PoolDB {
            con = getDataSource().getConnection();
            LOGGER.info("Assign a new connection");
         } catch (SQLException e) {
-            throw new DBException("Can't get the connection with the DataBase " + e.getMessage());
+            throw new ServerConnectionErrorException("Can't get the connection with the DataBase " + e.getMessage());
         }
         LOGGER.info("Return");
          return con;
@@ -118,17 +118,17 @@ public class PoolDB {
 
     /**
      * This method get the connection of one client and returns to the pool
-     * @throws DataBaseConnectionException Because can't
+     * @throws ServerConnectionErrorException Because can't
      * connect correctly with the DataBase
      */
-    public synchronized static void returnConnection(Connection onUseCon) throws DBException {
+    public synchronized static void returnConnection(Connection onUseCon) throws ServerConnectionErrorException {
         if (onUseCon != null) {//If connection is done
             try {
                 onUseCon.close();
                 onUseCon = null;
 
             } catch (SQLException e) {
-                throw new DBException("Can't get the connection with the DataBase " + e.getMessage());
+                throw new ServerConnectionErrorException("Can't get the connection with the DataBase " + e.getMessage());
             }
         }
     }

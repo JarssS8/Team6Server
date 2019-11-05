@@ -5,7 +5,6 @@
  */
 package server;
 
-import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ResourceBundle;
 import java.util.logging.Logger;
@@ -60,7 +59,7 @@ public class ApplicationServer {
                     //This maybe could go in the bottom of the if
                     setCurrentThreadCount(getCurrentThreadCount() + 1);
                     LOGGER.info("New Thread added. Number: "+getCurrentThreadCount());
-                    ServerWorkerThread thread = new ServerWorkerThread();
+                    ServerWorkerThread thread = new ServerWorkerThread(); //new ServerWorkerThread(PORT,5);
                     thread.setSocket(serverSocket.accept());
                     thread.start();
                 } else {
@@ -69,7 +68,7 @@ public class ApplicationServer {
                 
             }
 
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             throw new ServerSocketConnectionException("Connection error in server socket\n" + ex.getMessage());
 
         }

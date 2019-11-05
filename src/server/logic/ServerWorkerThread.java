@@ -5,18 +5,16 @@
  */
 package server.logic;
 
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.logging.Level;
 import java.util.logging.Logger;
+import server.ApplicationServer;
 import utilities.beans.Message;
 import utilities.beans.User;
-import utilities.exception.DBException;
-import utilities.exception.LogicException;
 import utilities.exception.LoginAlreadyTakenException;
 import utilities.exception.LoginNotFoundException;
+import utilities.exception.ServerConnectionErrorException;
 import utilities.exception.WrongPasswordException;
 import utilities.interfaces.Connectable;
 
@@ -28,10 +26,11 @@ import utilities.interfaces.Connectable;
 public class ServerWorkerThread extends Thread {
     
     private static final Logger LOGGER=Logger.getLogger("server.logic.ServerWorkerThread");
-    private ObjectInputStream receive = null;
-    private ObjectOutputStream send = null;
+    private ObjectInputStream objectInputStream = null;
+    private ObjectOutputStream objectOutputStream = null;
     private User user = null;
-    private Message message = null;
+    private Message messageIn = null;
+    private Message messageOut = null;
     private String type;
     private Connectable dao = ConnectableFactory.getDAO();
     private Socket socket;
@@ -52,15 +51,52 @@ public class ServerWorkerThread extends Thread {
     public void run() {
         try {
             //Reading from the socket
-            receive = new ObjectInputStream(socket.getInputStream());
-            send = new ObjectOutputStream(socket.getOutputStream());
+            objectInputStream = new ObjectInputStream(socket.getInputStream());
+            objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             LOGGER.info("Starting to read the message...");
-            message = (Message) receive.readObject();
-            user = message.getUser();
-            type = message.getType();
+            messageIn = (Message) objectInputStream.readObject();
+            user = messageIn.getUser();
+            type = messageIn.getType();
             LOGGER.info("User wants to "+type);
             LOGGER.info("Starting to decide...");
+            
             //Interpreting clients request
+            messageOut=interpreteMessage(messageIn);
+            //Sending answer to the client
+            
+            messageOut.setUser(this.user);
+            LOGGER.info("Message loaded to return: ");
+            objectOutputStream.writeObject(messageOut);
+            LOGGER.info("Message sent...");
+            //Closing Streams and the socket
+            if (objectOutputStream != null) {
+                objectOutputStream.close();
+                LOGGER.info("ObjectImputStream closed...");
+            }
+
+            if (objectInputStream != null) {
+                objectInputStream.close();
+                LOGGER.info("ObjectOutputStream closed...");
+            }
+
+            if (socket != null) {
+                socket.close();
+                LOGGER.info("Socket closed...");
+            }
+
+            ApplicationServer.setCurrentThreadCount(ApplicationServer.getCurrentThreadCount()-1);
+            LOGGER.info("Decreasing current thread number by one...");
+            LOGGER.info("Current thread number: "+ApplicationServer.getCurrentThreadCount());
+                
+            } catch (Exception ex) {
+                LOGGER.warning("Error connecting to the server...");
+        }
+            
+        }
+    
+    public Message interpreteMessage(Message message) {
+        Message retMessage = message;
+        try {
             switch(type) {
                 case Message.LOGIN_MESSAGE: {
                     this.user=dao.logIn(user);
@@ -78,51 +114,23 @@ public class ServerWorkerThread extends Thread {
                     break;
                 }
             }
-            //Sending answer to the client
-            message.setUser(this.user);
-            message.setType(dao.getMessage());
-            LOGGER.info("Message loaded to return: "+dao.getMessage());
-            send.writeObject(message);
-            LOGGER.info("Message sent...");
-            
-            
-        } catch (IOException e1) {
-            LOGGER.severe("ERROR"+e1.getMessage());
-        } catch (ClassNotFoundException e2) {
-            LOGGER.severe("ERROR en la lectura de objetos"+e2.getMessage());
-        } catch (LoginNotFoundException ex) {
-            LOGGER.severe(type);
+        } catch (LoginNotFoundException e3) {
+            LOGGER.warning("Login not found");
+            retMessage.setType("LoginError");
         } catch (WrongPasswordException ex) {
-            LOGGER.severe(type);
-        } catch (LogicException ex) {
-            LOGGER.severe(type);
+            LOGGER.warning("Password not found");
+            retMessage.setType("PasswordError");
         } catch (LoginAlreadyTakenException ex) {
-            LOGGER.severe(type);
-        } catch (DBException ex) {
-            LOGGER.severe(type);
-        } finally {
-            try {
-                //Closing Streams and the socket
-                if (send != null) {
-                    send.close();
-                    LOGGER.info("ObjectImputStream closed...");
-                }
-                    
-                if (receive != null) {
-                    receive.close();
-                    LOGGER.info("ObjectOutputStream closed...");
-                }
-                    
-                if (socket != null) {
-                    socket.close();
-                    LOGGER.info("Socket closed...");
-                }
-                    
-            } catch (IOException ex) {
-                LOGGER.severe(type);
-            }
-            
+            LOGGER.warning("Login already exists");
+            retMessage.setType("LoginTaken");
+        } catch (ServerConnectionErrorException ex) {
+            LOGGER.warning("Error connecting to the server");
+            retMessage.setType("ServerError");
+        } catch (Exception ex) {
+            LOGGER.warning(type);
         }
+        return retMessage;
+        
           
     }
     
