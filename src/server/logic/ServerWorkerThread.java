@@ -5,6 +5,7 @@
  */
 package server.logic;
 
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -19,13 +20,14 @@ import utilities.exception.WrongPasswordException;
 import utilities.interfaces.Connectable;
 
 /**
- * This class will create threads, read objects from the socket, interpretate them
- * and buld an answer that will be sent via socket.
+ * This class will create threads, read objects from the socket, interpretate
+ * them and buld an answer that will be sent via socket.
+ *
  * @author aimar
  */
 public class ServerWorkerThread extends Thread {
-    
-    private static final Logger LOGGER=Logger.getLogger("server.logic.ServerWorkerThread");
+
+    private static final Logger LOGGER = Logger.getLogger("server.logic.ServerWorkerThread");
     private ObjectInputStream objectInputStream = null;
     private ObjectOutputStream objectOutputStream = null;
     private User user = null;
@@ -36,36 +38,19 @@ public class ServerWorkerThread extends Thread {
     private Socket socket;
 
     public ServerWorkerThread(Socket socket) {
-        this.socket=socket;
+        this.socket = socket;
     }
-    
+
     /**
      * This method executes the thread.
      */
     @Override
     public void run() {
         try {
-            //Reading from the socket
-            objectInputStream = new ObjectInputStream(socket.getInputStream());
-            objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
-            LOGGER.info("Starting to read the message...");
-            messageIn = (Message) objectInputStream.readObject();
-            user = messageIn.getUser();
-            type = messageIn.getType();
-            LOGGER.info("User wants to "+type);
-            
-            //Interpreting clients request
-            LOGGER.info("Starting to decide...");
-            messageOut=interpreteMessage(messageIn);
-            //Sending answer to the client
-            
-            if (messageOut.getUser() != null) {
-                messageOut.setType("OK");
-            }
-            
-            LOGGER.info("Message loaded to return: ");
-            objectOutputStream.writeObject(messageOut);
-            LOGGER.info("Message sent...");      
+
+            readMessage();
+            messageOut = interpreteMessage(messageIn);
+            sendMessage();
 
             //Closing Streams and the socket
             if (objectOutputStream != null) {
@@ -83,20 +68,39 @@ public class ServerWorkerThread extends Thread {
                 LOGGER.info("Socket closed...");
             }
 
-            ApplicationServer.setCurrentThreadCount(ApplicationServer.getCurrentThreadCount()-1);
-            LOGGER.info("Decreasing current thread number by one...");
-            LOGGER.info("Current thread number: "+ApplicationServer.getCurrentThreadCount());
-                
-            } catch (Exception ex) {
-                LOGGER.warning("Error connecting to the server...");
-        }
             
+
+        } catch (IOException ex) {
+            LOGGER.warning("Error connecting to the server..." + ex.getMessage());
+        } finally {
+            ApplicationServer.setCurrentThreadCount(ApplicationServer.getCurrentThreadCount() - 1);
+            LOGGER.info("Decreasing current thread number by one...");
+            LOGGER.info("Current thread number: " + ApplicationServer.getCurrentThreadCount());
         }
-    
-    public Message interpreteMessage(Message message) {
-        Message retMessage = message;
+
+    }
+
+    public void readMessage() {
         try {
-            switch(type) {
+            objectInputStream = new ObjectInputStream(socket.getInputStream());
+            objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+            LOGGER.info("Starting to read the message...");
+            messageIn = (Message) objectInputStream.readObject();
+            user = messageIn.getUser();
+            type = messageIn.getType();
+            LOGGER.info("User wants to " + type);
+        } catch (IOException ex) {
+            LOGGER.warning("IO exception\n" + ex.getMessage());
+        } catch (ClassNotFoundException ex) {
+            LOGGER.warning("Class not found exception\n" + ex.getMessage());
+        }
+    }
+
+    public Message interpreteMessage(Message message) {
+        LOGGER.info("Starting to decide...");
+        Message retMessage = new Message();
+        try {
+            switch (type) {
                 case Message.LOGIN_MESSAGE: {
                     retMessage.setUser(dao.logIn(user));
                     LOGGER.info("Initiating login...");
@@ -113,6 +117,11 @@ public class ServerWorkerThread extends Thread {
                     break;
                 }
             }
+            
+            if (retMessage.getUser() != null) { //All OK
+                retMessage.setType("OK");
+            }
+            //The exception change the message type we send to the client
         } catch (LoginNotFoundException ex) {
             LOGGER.warning("Login not found");
             retMessage.setType("LoginError");
@@ -129,8 +138,15 @@ public class ServerWorkerThread extends Thread {
             LOGGER.warning(type);
         }
         return retMessage;
-        
-          
     }
-    
+
+    public void sendMessage() {
+        try {
+            LOGGER.info("Message loaded to return: ");
+            objectOutputStream.writeObject(messageOut);
+            LOGGER.info("Message sent...");
+        } catch (IOException ex) {
+            LOGGER.warning("IO exception\n" + ex.getMessage());
+        }
+    }
 }
