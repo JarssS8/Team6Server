@@ -20,8 +20,8 @@ import utilities.exception.WrongPasswordException;
 import utilities.interfaces.Connectable;
 
 /**
- * This class will create threads, read objects from the socket, interpretate
- * them and buld an answer that will be sent via socket.
+ * This class reads objects from the socket, interpretate them and builds an
+ * answer that will be sent via socket to the client.
  *
  * @author aimar
  */
@@ -67,9 +67,6 @@ public class ServerWorkerThread extends Thread {
                 socket.close();
                 LOGGER.info("Socket closed...");
             }
-
-            
-
         } catch (IOException ex) {
             LOGGER.warning("Error connecting to the server..." + ex.getMessage());
         } finally {
@@ -79,7 +76,11 @@ public class ServerWorkerThread extends Thread {
         }
 
     }
-
+    
+    /**
+     * This method reads a Message object from the socket and divides it 
+     * in a user object and a type string.
+     */
     public void readMessage() {
         try {
             objectInputStream = new ObjectInputStream(socket.getInputStream());
@@ -96,6 +97,14 @@ public class ServerWorkerThread extends Thread {
         }
     }
 
+    /**
+     * This method decides what to do depending on the type received
+     * in the Message. Changes the type string depending on what exception
+     * is throwed.
+     * @param message A Message that contains a user and a type received from
+     * the socket.
+     * @return retMessage A Message object
+     */
     public Message interpreteMessage(Message message) {
         LOGGER.info("Starting to decide...");
         Message retMessage = new Message();
@@ -117,7 +126,7 @@ public class ServerWorkerThread extends Thread {
                     break;
                 }
             }
-            
+
             if (retMessage.getUser() != null) { //All OK
                 retMessage.setType("OK");
             }
@@ -140,6 +149,9 @@ public class ServerWorkerThread extends Thread {
         return retMessage;
     }
 
+    /**
+     * This method sends the message to the client via socket.
+     */
     public void sendMessage() {
         try {
             LOGGER.info("Message loaded to return: ");

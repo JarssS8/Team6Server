@@ -127,7 +127,7 @@ public class DAO implements Connectable{
             con = PoolDB.getConnection();
             stmt=con.prepareStatement(sqlExist);
             stmt.setString(1, user.getLogin());
-             ResultSet rs = stmt.executeQuery();
+            ResultSet rs = stmt.executeQuery();
             while(rs.next()){
                 logaux=rs.getString(1);
             }
@@ -147,12 +147,10 @@ public class DAO implements Connectable{
                 stmt.setTimestamp(7, Timestamp.valueOf(LocalDateTime.now()));
                 stmt.executeUpdate();
                 stmt.close();
-                this.message = "signupok";
             }
             else
-                this.message = "signupexist";
+                throw new LoginAlreadyTakenException();
         }catch(SQLException e){
-            this.message = "ServerError";
             LOGGER.severe("Error connecting with database"+e.getMessage());
             throw new ServerConnectionErrorException();
         }finally{
