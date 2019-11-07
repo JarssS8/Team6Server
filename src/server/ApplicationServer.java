@@ -48,12 +48,13 @@ public class ApplicationServer {
      */
     public static void threadsListener() throws ServerSocketConnectionException {
 
-        LOGGER.info("Open the properties file the maximum number of threads");
+        //LOGGER.info("Open the properties file the maximum number of threads");
+        LOGGER.info("Reading properties file to get the max thread number");
         int maxThreads = Integer.parseInt(ResourceBundle.getBundle("server.PropertiesServer").getString("maxThreads"));
-        LOGGER.info("Max threads get it.\nTry to use server socket for listen the petitions");
+        //LOGGER.info("Max threads get it.\nTry to use server socket for listen the petitions");
         try {
             ServerSocket serverSocket = new ServerSocket(PORT);
-            LOGGER.info("Waiting users that conects to the server");
+            LOGGER.info("Waiting for users to request connection");
             while (true) {
                 if (getCurrentThreadCount() < maxThreads) {
                     //This maybe could go in the bottom of the if

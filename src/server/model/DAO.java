@@ -28,7 +28,6 @@ public class DAO implements Connectable{
     //Connect with the Database
     private Connection con = null;
     private PreparedStatement stmt;
-    private String message;
     private static final Logger LOGGER = Logger.getLogger("server.model.DAO");
     
     //ClASS METHODS
@@ -53,6 +52,7 @@ public class DAO implements Connectable{
     @Override
     public User logIn(User user) throws LoginNotFoundException, WrongPasswordException, ServerConnectionErrorException {
         User auxUser = new User();
+        Boolean loginExists=false;
         LOGGER.info("Enter in login method");
         try{
             
@@ -75,16 +75,15 @@ public class DAO implements Connectable{
                 auxUser.setPassword(rs.getString(7));
                 auxUser.setLastAccess(rs.getTimestamp(8));
                 auxUser.setLastPasswordChange(rs.getTimestamp(9));
+                loginExists=true;
             }
             rs.close();
             //Result data comprobation to generate needed messages
-            if(auxUser == null){//Cannot found the user
-                this.message = "LoginError";
+            if(!loginExists){//Cannot found the user
                 LOGGER.severe("Login not found on database");
                 throw new LoginNotFoundException();
             }
-            else if(!user.getPassword().equals(auxUser.getPassword())){//Invalid password
-                this.message = "PasswordError";
+            else if(loginExists && !user.getPassword().equals(auxUser.getPassword())){//Invalid password
                 LOGGER.severe("Wrong password to login");
                 throw new WrongPasswordException();
             }
@@ -92,14 +91,14 @@ public class DAO implements Connectable{
                 LOGGER.info("User and password match");
                 user=auxUser;
                 //Update of the last log in
-                String sqlFecha="Update user set lastAccess=?";
+                String sqlFecha="Update user set lastAccess=? where login=?";
                 stmt=con.prepareStatement(sqlFecha);
                 stmt.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
+                stmt.setString(2, user.getLogin());
                 stmt.executeUpdate();
                 stmt.close();
             }
         }catch(SQLException e){
-            this.message = "ServerError";
             LOGGER.severe("Error connecting with database"+e.getMessage());
             throw new ServerConnectionErrorException();
         }finally{
@@ -180,6 +179,7 @@ public class DAO implements Connectable{
             stmt.close();
         } catch (SQLException ex) {
             LOGGER.severe("Error connecting with database"); 
+            throw new ServerConnectionErrorException();
         }
         finally{
             PoolDB.returnConnection(con);

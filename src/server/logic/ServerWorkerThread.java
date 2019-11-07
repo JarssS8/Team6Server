@@ -68,7 +68,7 @@ public class ServerWorkerThread extends Thread {
                 LOGGER.info("Socket closed...");
             }
         } catch (IOException ex) {
-            LOGGER.warning("Error connecting to the server..." + ex.getMessage());
+            LOGGER.warning("ServerWorkerThread error connecting to the server..." + ex.getMessage());
         } finally {
             ApplicationServer.setCurrentThreadCount(ApplicationServer.getCurrentThreadCount() - 1);
             LOGGER.info("Decreasing current thread number by one...");
@@ -89,11 +89,11 @@ public class ServerWorkerThread extends Thread {
             messageIn = (Message) objectInputStream.readObject();
             user = messageIn.getUser();
             type = messageIn.getType();
-            LOGGER.info("User wants to " + type);
+            LOGGER.info("User requests: " + type);
         } catch (IOException ex) {
-            LOGGER.warning("IO exception\n" + ex.getMessage());
+            LOGGER.warning("IO exception" + ex.getMessage());
         } catch (ClassNotFoundException ex) {
-            LOGGER.warning("Class not found exception\n" + ex.getMessage());
+            LOGGER.warning("Class not found exception: " + ex.getMessage());
         }
     }
 
@@ -109,7 +109,7 @@ public class ServerWorkerThread extends Thread {
         LOGGER.info("Starting to decide...");
         Message retMessage = new Message();
         try {
-            switch (type) {
+            switch (message.getType()) {
                 case Message.LOGIN_MESSAGE: {
                     retMessage.setUser(dao.logIn(user));
                     LOGGER.info("Initiating login...");
@@ -132,19 +132,17 @@ public class ServerWorkerThread extends Thread {
             }
             //The exception change the message type we send to the client
         } catch (LoginNotFoundException ex) {
-            LOGGER.warning("Login not found");
+            LOGGER.warning("Login not found: "+ex.getMessage());
             retMessage.setType("LoginError");
         } catch (WrongPasswordException ex) {
-            LOGGER.warning("Password not found");
+            LOGGER.warning("Password not found: "+ex.getMessage());
             retMessage.setType("PasswordError");
         } catch (LoginAlreadyTakenException ex) {
-            LOGGER.warning("Login already exists");
+            LOGGER.warning("Login already exists: "+ex.getMessage());
             retMessage.setType("LoginTaken");
         } catch (ServerConnectionErrorException ex) {
-            LOGGER.warning("Error connecting to the server");
+            LOGGER.warning("Error connecting to the server: "+ex.getMessage());
             retMessage.setType("ServerError");
-        } catch (Exception ex) {
-            LOGGER.warning(type);
         }
         return retMessage;
     }
@@ -158,7 +156,8 @@ public class ServerWorkerThread extends Thread {
             objectOutputStream.writeObject(messageOut);
             LOGGER.info("Message sent...");
         } catch (IOException ex) {
-            LOGGER.warning("IO exception\n" + ex.getMessage());
+            LOGGER.warning("ServerWorkerThread error while sending message to client: " + ex.getMessage());
+            
         }
     }
 }
