@@ -5,6 +5,7 @@
  */
 package server;
 
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ResourceBundle;
 import java.util.logging.Logger;
@@ -35,6 +36,7 @@ public class ApplicationServer {
     
     /**
      * @param args the command line arguments
+     * @throws utilities.exception.ServerSocketConnectionException
      */
  
     public static void main(String[] args) throws ServerSocketConnectionException {
@@ -44,7 +46,7 @@ public class ApplicationServer {
     /**
      * This method listen for new client connection and count how many active threads
      * the server got and decide if it can create a new thread
-     * @throws ConnectionException A specific exception class that control if there are some problem with the server socket communication
+     * @throws utilities.exception.ServerSocketConnectionException
      */
     public static void threadsListener() throws ServerSocketConnectionException {
 
@@ -57,10 +59,9 @@ public class ApplicationServer {
             LOGGER.info("Waiting for users to request connection");
             while (true) {
                 if (getCurrentThreadCount() < maxThreads) {
-                    //This maybe could go in the bottom of the if
-                    setCurrentThreadCount(getCurrentThreadCount() + 1);
                     LOGGER.info("New Thread added. Number: "+getCurrentThreadCount());
                     ServerWorkerThread thread = new ServerWorkerThread(serverSocket.accept()); //new ServerWorkerThread(PORT,5);
+                    setCurrentThreadCount(getCurrentThreadCount() + 1);
                     thread.start();
                 } else {
                     LOGGER.info("Exceded max number of threads");
@@ -68,7 +69,7 @@ public class ApplicationServer {
                 
             }
 
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             throw new ServerSocketConnectionException("Connection error in server socket\n" + ex.getMessage());
 
         }

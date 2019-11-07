@@ -111,7 +111,7 @@ public class ServerWorkerThread extends Thread {
         try {
             switch (message.getType()) {
                 case Message.LOGIN_MESSAGE: {
-                    retMessage.setUser(dao.logIn(user));
+                    retMessage.setUser(dao.logIn(message.getUser()));
                     LOGGER.info("Initiating login...");
                     break;
                 }
