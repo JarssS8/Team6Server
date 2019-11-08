@@ -14,7 +14,7 @@ import org.apache.commons.dbcp2.BasicDataSource;
 import utilities.exception.*;
 
 /**
- *
+ * This class creates and returns connections.
  * @author Adrian
  */
 public class PoolDB {
@@ -63,8 +63,6 @@ public class PoolDB {
      * This method assign one connection to everyone who call him, while he have
      * possible connections to assign
      */
-    //Necesito dos arraylist y cuando le asigno una conexion a un cliente se me 
-    //va del array de posibles conexiones a conexiones en uso
     public static DataSource getDataSource() {
 
         LOGGER.info("Getting DataSource of the connection");
@@ -99,7 +97,7 @@ public class PoolDB {
      * connection ArrayList
      *
      * @return A connection for one thread
-     * @throws server.exception.DataBaseConnectionException Because can't
+     * @throws ServerConnectionErrorException Because can't
      * connect correctly with the DataBase
      */
     public synchronized static Connection getConnection() throws ServerConnectionErrorException {

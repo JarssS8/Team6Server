@@ -20,35 +20,24 @@ import utilities.interfaces.Connectable;
 
 
 /**
- *
+ * This class interacts with the database and executes SQL querys to manipulate
+ * data, then returns it to the ServerWorkerThread.
  * @author Diego Urraca
  */
-
 public class DAO implements Connectable{
     //Connect with the Database
     private Connection con = null;
     private PreparedStatement stmt;
     private static final Logger LOGGER = Logger.getLogger("server.model.DAO");
-    
-    //ClASS METHODS
-    
+ 
     /**
-     * This method returns a message String
-     * @return message A string that contains a message
+     * Method for User/Password comprobation and log in the application.
+     * @param user A User object that contains a User.
+     * @return user with the result.
+     * @throws LoginNotFoundException If login does not exist in the database.
+     * @throws WrongPasswordException If password does not match with the user.
+     * @throws ServerConnectionErrorException If there's an error in the server.
      */
-    
-   //DB METHODS
-    
-    /**
-     * Method for User/Password comprobation and log in the application
-     * @param user
-     * @return user with the result
-     * @throws utilities.exception.LoginNotFoundException
-     * @throws utilities.exception.WrongPasswordException
-     * @throws utilities.exception.ServerConnectionErrorException
-     */
-    
-   
     @Override
     public User logIn(User user) throws LoginNotFoundException, WrongPasswordException, ServerConnectionErrorException {
         User auxUser = new User();
@@ -109,13 +98,12 @@ public class DAO implements Connectable{
     
     /**
      * Method to register a new user
-     * @param user
-     * @return user
-     * @throws utilities.exception.LoginAlreadyTakenException
-     * @throws utilities.exception.ServerConnectionErrorException
+     * @param user A User object that contains a User.
+     * @return user with the result.
+     * @throws LoginAlreadyTakenException If the login already exists in the
+     * database.
+     * @throws ServerConnectionErrorException If there's an error in the server.
      */
-    
-    
     @Override
     public User signUp(User user) throws LoginAlreadyTakenException, ServerConnectionErrorException{
         String logaux=null;
@@ -160,11 +148,9 @@ public class DAO implements Connectable{
     
     /**
      * Method to SignOut the application
-     * @param user 
-     *  
+     * @param user A User object that contains a User. 
+     * @throws ServerConnectionErrorException If there's an error in the server.
      */
-    
-    
     @Override
     public void logOut(User user) throws ServerConnectionErrorException{
         try {

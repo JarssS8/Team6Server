@@ -10,11 +10,15 @@ import utilities.interfaces.Connectable;
 
 
 /**
- *
+ * This class is a Factory for Connectable interface.
  * @author adria
  */
 public class ConnectableFactory {
 
+    /**
+     * This method returns a DAO implementation.
+     * @return An object implementing DAO.
+     */
     public static synchronized Connectable getDAO() {
         return new DAO();
     }
