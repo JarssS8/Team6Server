@@ -9,67 +9,114 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.logging.Level;
 import java.util.logging.Logger;
+import server.ApplicationServer;
 import utilities.beans.Message;
 import utilities.beans.User;
-import utilities.exception.DBException;
-import utilities.exception.LogicException;
 import utilities.exception.LoginAlreadyTakenException;
 import utilities.exception.LoginNotFoundException;
+import utilities.exception.ServerConnectionErrorException;
 import utilities.exception.WrongPasswordException;
 import utilities.interfaces.Connectable;
 
 /**
- * This class will create threads, read objects from the socket, interpretate them
- * and buld an answer that will be sent via socket.
+ * This class reads objects from the socket, interpretate them and builds an
+ * answer that will be sent via socket to the client.
+ *
  * @author aimar
  */
 public class ServerWorkerThread extends Thread {
-    
-    private static final Logger LOGGER=Logger.getLogger("server.logic.ServerWorkerThread");
-    private ObjectInputStream receive = null;
-    private ObjectOutputStream send = null;
+
+    private static final Logger LOGGER = Logger.getLogger("server.logic.ServerWorkerThread");
+    private ObjectInputStream objectInputStream = null;
+    private ObjectOutputStream objectOutputStream = null;
     private User user = null;
-    private Message message = null;
+    private Message messageIn = null;
+    private Message messageOut = null;
     private String type;
     private Connectable dao = ConnectableFactory.getDAO();
     private Socket socket;
-    
-    /**
-     * This method receives a socket from ApplicationServer and assigns it to
-     * a local socket object.
-     * @param socket A socket that contains the message from client side.
-     */
-    public void setSocket(Socket socket) {
-        this.socket=socket;
+
+    public ServerWorkerThread(Socket socket) {
+        this.socket = socket;
     }
- 
+
     /**
      * This method executes the thread.
      */
     @Override
     public void run() {
         try {
-            //Reading from the socket
-            receive = new ObjectInputStream(socket.getInputStream());
-            send = new ObjectOutputStream(socket.getOutputStream());
+
+            readMessage();
+            messageOut = interpreteMessage(messageIn);
+            sendMessage();
+
+            //Closing Streams and the socket
+            if (objectOutputStream != null) {
+                objectOutputStream.close();
+                LOGGER.info("ObjectImputStream closed...");
+            }
+
+            if (objectInputStream != null) {
+                objectInputStream.close();
+                LOGGER.info("ObjectOutputStream closed...");
+            }
+
+            if (socket != null) {
+                socket.close();
+                LOGGER.info("Socket closed...");
+            }
+        } catch (IOException ex) {
+            LOGGER.warning("ServerWorkerThread: Error connecting to the server..." + ex.getMessage());
+        } finally {
+            ApplicationServer.setCurrentThreadCount(ApplicationServer.getCurrentThreadCount() - 1);
+            LOGGER.info("Decreasing current thread number by one...");
+            LOGGER.info("Current thread number: " + ApplicationServer.getCurrentThreadCount());
+        }
+
+    }
+
+    /**
+     * This method reads a Message object from the socket and divides it in a
+     * user object and a type string.
+     */
+    public void readMessage() {
+        try {
+            objectInputStream = new ObjectInputStream(socket.getInputStream());
+            objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             LOGGER.info("Starting to read the message...");
-            message = (Message) receive.readObject();
-            user = message.getUser();
-            type = message.getType();
-            LOGGER.info("User wants to "+type);
-            LOGGER.info("Starting to decide...");
-            //Interpreting clients request
-            switch(type) {
+            messageIn = (Message) objectInputStream.readObject();
+            user = messageIn.getUser();
+            type = messageIn.getType();
+            LOGGER.info("User requests: " + type);
+        } catch (IOException ex) {
+            LOGGER.warning("ServerWorkerThread: IO exception" + ex.getMessage());
+        } catch (ClassNotFoundException ex) {
+            LOGGER.warning("ServerWorkerThread: Class not found exception: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * This method decides what to do depending on the type received in the
+     * Message. Changes the type string depending on what exception is throwed.
+     *
+     * @param message A Message that contains a user and a type received from
+     * the socket.
+     * @return retMessage A Message object
+     */
+    public Message interpreteMessage(Message message) {
+        LOGGER.info("Starting to decide...");
+        Message retMessage = new Message();
+        try {
+            switch (message.getType()) {
                 case Message.LOGIN_MESSAGE: {
-                    
-                    this.user=dao.logIn(user);
+                    retMessage.setUser(dao.logIn(message.getUser()));
                     LOGGER.info("Initiating login...");
                     break;
                 }
                 case Message.SIGNUP_MESSAGE: {
-                    this.user=dao.signUp(user);
+                    retMessage.setUser(dao.signUp(user));
                     LOGGER.info("Initiating sign up...");
                     break;
                 }
@@ -79,52 +126,38 @@ public class ServerWorkerThread extends Thread {
                     break;
                 }
             }
-            //Sending answer to the client
-            message.setUser(this.user);
-            message.setType(dao.getMessage());
-            LOGGER.info("Message loaded to return: "+dao.getMessage());
-            send.writeObject(message);
-            LOGGER.info("Message sent...");
-            
-            
-        } catch (IOException e1) {
-            LOGGER.severe("ERROR"+e1.getMessage());
-        } catch (ClassNotFoundException e2) {
-            LOGGER.severe("ERROR en la lectura de objetos"+e2.getMessage());
-        } catch (LoginNotFoundException ex) {
-            LOGGER.severe(type);
-        } catch (WrongPasswordException ex) {
-            LOGGER.severe(type);
-        } catch (LogicException ex) {
-            LOGGER.severe(type);
-        } catch (LoginAlreadyTakenException ex) {
-            LOGGER.severe(type);
-        } catch (DBException ex) {
-            LOGGER.severe(type);
-        } finally {
-            try {
-                //Closing Streams and the socket
-                if (send != null) {
-                    send.close();
-                    LOGGER.info("ObjectImputStream closed...");
-                }
-                    
-                if (receive != null) {
-                    receive.close();
-                    LOGGER.info("ObjectOutputStream closed...");
-                }
-                    
-                if (socket != null) {
-                    socket.close();
-                    LOGGER.info("Socket closed...");
-                }
-                    
-            } catch (IOException ex) {
-                LOGGER.severe(type);
+
+            if (retMessage.getUser() != null) { //All OK
+                retMessage.setType("OK");
             }
-            
+            //The exception change the message type we send to the client
+        } catch (LoginNotFoundException ex) {
+            LOGGER.warning("ServerWorkerThread: Login not found: " + ex.getMessage());
+            retMessage.setType("LoginError");
+        } catch (WrongPasswordException ex) {
+            LOGGER.warning("ServerWorkerThread: Password not found: " + ex.getMessage());
+            retMessage.setType("PasswordError");
+        } catch (LoginAlreadyTakenException ex) {
+            LOGGER.warning("ServerWorkerThread: Login already exists: " + ex.getMessage());
+            retMessage.setType("LoginTaken");
+        } catch (ServerConnectionErrorException ex) {
+            LOGGER.warning("ServerWorkerThread: Error connecting to the server: " + ex.getMessage());
+            retMessage.setType("ServerError");
         }
-          
+        return retMessage;
     }
-    
+
+    /**
+     * This method sends the message to the client via socket.
+     */
+    public void sendMessage() {
+        try {
+            LOGGER.info("Message loaded to return: ");
+            objectOutputStream.writeObject(messageOut);
+            LOGGER.info("Message sent...");
+        } catch (IOException ex) {
+            LOGGER.warning("ServerWorkerThread: Error while sending message to client: " + ex.getMessage());
+
+        }
+    }
 }

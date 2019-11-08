@@ -11,10 +11,10 @@ import java.util.ResourceBundle;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
 import org.apache.commons.dbcp2.BasicDataSource;
-import utilities.exception.DBException;
+import utilities.exception.*;
 
 /**
- *
+ * This class creates and returns connections.
  * @author Adrian
  */
 public class PoolDB {
@@ -63,8 +63,6 @@ public class PoolDB {
      * This method assign one connection to everyone who call him, while he have
      * possible connections to assign
      */
-    //Necesito dos arraylist y cuando le asigno una conexion a un cliente se me 
-    //va del array de posibles conexiones a conexiones en uso
     public static DataSource getDataSource() {
 
         LOGGER.info("Getting DataSource of the connection");
@@ -99,10 +97,10 @@ public class PoolDB {
      * connection ArrayList
      *
      * @return A connection for one thread
-     * @throws server.exception.DataBaseConnectionException Because can't
+     * @throws ServerConnectionErrorException Because can't
      * connect correctly with the DataBase
      */
-    public synchronized static Connection getConnection() throws DBException {
+    public synchronized static Connection getConnection() throws ServerConnectionErrorException {
 
         LOGGER.info("Entre in getConnection method");
         Connection con = null;
@@ -110,7 +108,7 @@ public class PoolDB {
            con = getDataSource().getConnection();
            LOGGER.info("Assign a new connection");
         } catch (SQLException e) {
-            throw new DBException("Can't get the connection with the DataBase " + e.getMessage());
+            throw new ServerConnectionErrorException("Can't get the connection with the DataBase " + e.getMessage());
         }
         LOGGER.info("Return");
          return con;
@@ -118,17 +116,17 @@ public class PoolDB {
 
     /**
      * This method get the connection of one client and returns to the pool
-     * @throws DataBaseConnectionException Because can't
+     * @throws ServerConnectionErrorException Because can't
      * connect correctly with the DataBase
      */
-    public synchronized static void returnConnection(Connection onUseCon) throws DBException {
+    public synchronized static void returnConnection(Connection onUseCon) throws ServerConnectionErrorException {
         if (onUseCon != null) {//If connection is done
             try {
                 onUseCon.close();
                 onUseCon = null;
 
             } catch (SQLException e) {
-                throw new DBException("Can't get the connection with the DataBase " + e.getMessage());
+                throw new ServerConnectionErrorException("Can't get the connection with the DataBase " + e.getMessage());
             }
         }
     }
