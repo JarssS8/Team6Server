@@ -47,12 +47,17 @@ public class ServerWorkerThread extends Thread {
     @Override
     public void run() {
         try {
-
             readMessage();
             messageOut = interpreteMessage(messageIn);
             sendMessage();
-
-            //Closing Streams and the socket
+        } catch (Exception ex) {
+            LOGGER.warning("ServerWorkerThread: Error connecting to the server..." + ex.getMessage());
+        } finally {
+            ApplicationServer.setCurrentThreadCount(ApplicationServer.getCurrentThreadCount() - 1);
+            LOGGER.info("Decreasing current thread number by one...");
+            LOGGER.info("Current thread number: " + ApplicationServer.getCurrentThreadCount());
+            try {
+                //Closing Streams and the socket
             if (objectOutputStream != null) {
                 objectOutputStream.close();
                 LOGGER.info("ObjectImputStream closed...");
@@ -67,12 +72,10 @@ public class ServerWorkerThread extends Thread {
                 socket.close();
                 LOGGER.info("Socket closed...");
             }
-        } catch (IOException ex) {
-            LOGGER.warning("ServerWorkerThread: Error connecting to the server..." + ex.getMessage());
-        } finally {
-            ApplicationServer.setCurrentThreadCount(ApplicationServer.getCurrentThreadCount() - 1);
-            LOGGER.info("Decreasing current thread number by one...");
-            LOGGER.info("Current thread number: " + ApplicationServer.getCurrentThreadCount());
+            } catch(IOException e) {
+                LOGGER.warning("ServerWorkerThread: Error closing streams.");
+            }
+            
         }
 
     }
